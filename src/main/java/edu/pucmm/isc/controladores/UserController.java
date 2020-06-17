@@ -1,12 +1,15 @@
 package edu.pucmm.isc.controladores;
 import edu.pucmm.isc.objetos.CarroCompra;
+import edu.pucmm.isc.objetos.Producto;
 import edu.pucmm.isc.objetos.Usuario;
 import edu.pucmm.isc.servicios.StoreServices;
 import io.javalin.Javalin;
 import io.javalin.plugin.rendering.JavalinRenderer;
 import io.javalin.plugin.rendering.template.JavalinFreemarker;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.javalin.apibuilder.ApiBuilder.*;
@@ -27,6 +30,16 @@ public class UserController {
 
     public void aplicarRutas() {
         app.routes(() -> {
+
+            // Verificar si el carrito existe en la sesion antes de cargar
+            before(ctx -> {
+                CarroCompra carrito = ctx.sessionAttribute("carrito");
+                if(carrito == null) {
+                    List<Producto> productosIniciales = new ArrayList<Producto>();
+                    ctx.sessionAttribute("carrito", new CarroCompra(1, productosIniciales));
+                }
+            });
+
             path("/api/", () -> {
 
                 // Render de Login de usuarios
@@ -54,8 +67,8 @@ public class UserController {
                 // Logout de usuarios
                 // http://localhost:7000/api/usuarios/logout/
                 get("/usuarios/logout/", ctx -> {
-                    Usuario usr = ctx.sessionAttribute("usuario");
                     tienda.logoutUsuario();
+                    ctx.req.getSession().invalidate();
                     ctx.redirect("/api/usuarios/login/");
                 });
             });

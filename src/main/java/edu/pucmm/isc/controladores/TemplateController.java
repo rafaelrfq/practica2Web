@@ -33,6 +33,15 @@ public class TemplateController {
     public void aplicarRutas() {
         app.routes(() -> {
 
+            // Verificar si el carrito existe en la sesion antes de cargar
+            before(ctx -> {
+                CarroCompra carrito = ctx.sessionAttribute("carrito");
+                if(carrito == null) {
+                    List<Producto> productosIniciales = new ArrayList<Producto>();
+                    ctx.sessionAttribute("carrito", new CarroCompra(1, productosIniciales));
+                }
+            });
+
             path("/api/", () -> {
 
                 // CRUD de productos
