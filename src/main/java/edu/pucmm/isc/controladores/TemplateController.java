@@ -22,12 +22,15 @@ public class TemplateController {
     }
 
     //Obtencion de instacia de tienda
-    StoreServices tienda =StoreServices.getInstance();
+    StoreServices tienda = StoreServices.getInstance();
 
     //Registro de sistemas de plantillas
     private void registroPlantillas() {
         JavalinRenderer.register(JavalinFreemarker.INSTANCE, ".ftl");
     }
+
+    //Variables usadas en varias rutas
+    CarroCompra carrito;
 
     //Uso de rutas para mostrar templates
     public void aplicarRutas() {
@@ -35,7 +38,7 @@ public class TemplateController {
 
             // Verificar si el carrito existe en la sesion antes de cargar
             before(ctx -> {
-                CarroCompra carrito = ctx.sessionAttribute("carrito");
+                carrito = ctx.sessionAttribute("carrito");
                 if(carrito == null) {
                     List<Producto> productosIniciales = new ArrayList<Producto>();
                     ctx.sessionAttribute("carrito", new CarroCompra(1, productosIniciales));
@@ -47,7 +50,6 @@ public class TemplateController {
                 // CRUD de productos
                 // http://localhost:7000/api/crud
                 get("/productos/crud", ctx -> {
-                    CarroCompra carrito = ctx.sessionAttribute("carrito");
                     Map<String, Object> contexto = new HashMap<>();
                     contexto.put("title", "CRUD Productos");
                     contexto.put("productos", tienda.getListaProductos());
@@ -73,7 +75,6 @@ public class TemplateController {
                 // Editar un producto existente
                 // http://localhost:7000/api/productos/crud/editar/:id
                 get("/productos/crud/editar/:id", ctx -> {
-                    CarroCompra carrito = ctx.sessionAttribute("carrito");
                     Producto tmp = tienda.getProductoPorID(ctx.pathParam("id", Integer.class).get());
                     Map<String, Object> contexto = new HashMap<>();
                     contexto.put("title", "Editar Producto");
@@ -106,7 +107,6 @@ public class TemplateController {
                 // Listado de productos
                 // http://localhost:7000/api/productos
                 get("/productos/listar/", ctx -> {
-                    CarroCompra carrito = ctx.sessionAttribute("carrito");
                     Map<String, Object> contexto = new HashMap<>();
                     contexto.put("title", "Listado de Productos");
                     contexto.put("productos", tienda.getListaProductos());
@@ -120,7 +120,6 @@ public class TemplateController {
                 // Agregar producto del listado al carrito
                 // http://localhost:7000/api/productos/agregar/:id
                 post("/productos/agregar/:id", ctx -> {
-                    CarroCompra carrito = ctx.sessionAttribute("carrito");
                     Producto preprod = tienda.getProductoPorID(ctx.pathParam("id", Integer.class).get());
                     int cantidad = Integer.parseInt(ctx.formParam("cantidad"));
                     Producto producto = new Producto(preprod.getId(), preprod.getNombre(), preprod.getPrecio(), cantidad);
@@ -131,7 +130,6 @@ public class TemplateController {
                 // Carrito de compras
                 // http://localhost:7000/api/carrito
                 get("/carrito/", ctx -> {
-                    CarroCompra carrito = ctx.sessionAttribute("carrito");
                     Map<String, Object> contexto = new HashMap<>();
                     contexto.put("title", "Carrito de Compra");
                     contexto.put("carrito", carrito);
@@ -145,7 +143,6 @@ public class TemplateController {
                 // Limpiar carrito
                 // http://localhost:7000/api/carrito/limpiar
                 get("/carrito/limpiar", ctx -> {
-                    CarroCompra carrito = ctx.sessionAttribute("carrito");
                     tienda.setCarrito(carrito);
                     tienda.limpiarCarrito();
                     ctx.sessionAttribute("carrito", tienda.getCarrito());
@@ -155,7 +152,6 @@ public class TemplateController {
                 // Eliminar producto del carrito
                 // http://localhost:7000/api/carrito/eliminar/:id
                 get("/carrito/eliminar/:id", ctx -> {
-                    CarroCompra carrito = ctx.sessionAttribute("carrito");
                     tienda.setCarrito(carrito);
                     Producto tmp = tienda.getProductoEnCarrito(ctx.pathParam("id", Integer.class).get());
                     tienda.getCarrito().borrarProducto(tmp);
@@ -166,7 +162,6 @@ public class TemplateController {
                 // Procesar compra del carrito
                 // http://localhost:7000/api/carrito/procesar
                 post("/carrito/procesar/", ctx -> {
-                    CarroCompra carrito = ctx.sessionAttribute("carrito");
                     tienda.setCarrito(carrito);
                     long id = tienda.getListaVentas().get(tienda.getListaVentas().size() - 1).getId() + 1;
                     String nombreCliente = ctx.formParam("nombre");
@@ -180,7 +175,6 @@ public class TemplateController {
                 // Listado de ventas realizadas
                 // http://localhost:7000/api/ventas
                 get("/ventas/listar", ctx -> {
-                    CarroCompra carrito = ctx.sessionAttribute("carrito");
                     Map<String, Object> contexto = new HashMap<>();
                     contexto.put("title", "Listado de Ventas Realizadas");
                     contexto.put("ventas", tienda.getListaVentas());
